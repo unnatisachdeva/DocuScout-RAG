@@ -1,0 +1,11 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+*.pdf
+.DS_Store
+.streamlit/
+
+# Chroma/vector database
+chroma_db/
+vector store/chroma_db/

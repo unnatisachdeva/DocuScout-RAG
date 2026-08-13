@@ -1,0 +1,28 @@
+# LangChain
+langchain
+langchain-core
+langchain-community
+langchain-text-splitters
+
+# LLM Providers
+langchain-openai
+langchain-mistralai
+langchain-google-genai
+
+# Vector Database
+chromadb
+langchain-chroma
+
+# Document Loaders
+pypdf
+python-docx
+unstructured
+
+# Environment Variables
+python-dotenv
+
+# UI
+streamlit
+
+# Useful utilities
+tiktoken

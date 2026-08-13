@@ -1,0 +1,180 @@
+## **LANGUAGE MODELS:**
+
+- A **language model** is a *probability distribution over a sequence of tokens* (words, characters, sub‑words, etc.).
+- **Token:** the basic unit (word, character, sub‑word).
+    
+    **Type:** a *unique* token.
+    
+    **Vocabulary:** the set of all types extracted from a corpus (collection of words).
+    
+- Probability formulation:
+
+!Screenshot 2026-04-11 at 4.57.28 PM.png
+
+- “The monsoon rains have arrived” → High probability
+    
+    “The rains have arrived right on the monsoon” → Low probability 
+    
+- Syntax vs Semantics in LMs:
+    - **Syntactically correct but semantically wrong:**
+        - “The cheese eats the man”
+    - **Correct sentence:**
+        - “The man eats the cheese”
+    - LMs capture both:
+        - Grammar (syntax)
+        - Meaning (semantics)
+- An **autoregressive model** generates each token sequentially, conditioning on all previously generated tokens. LMs are autoregressive in nature.
+
+## Large Language Models:
+
+- “Large” refers to the number of parameters and size of training (number of tokens).
+- Evolution of Architectures:
+    - **1960s:** Rule‑based chatbots (e.g., ELIZA).
+    - **1990s–2000s:** RNN, LSTM, GRU to address vanishing gradients.
+    - **2017:** Transformer introduced (parallel processing, positional encoding).
+    - **Post‑2017:** Shift from RNN‑based to transformer‑based models; rapid scaling of parameters and data.
+- AI Hierarchy:
+    
+    Artificial Intelligence (AI) → Machine Learning (ML) → Deep Learning → Large Language Models (LLMs)
+    
+- Key Model Families:
+    1. Transformers:
+        - Two blocks: **Encoder** processes input; **Decoder** generates output.
+        - Enables *parallel* processing of tokens, unlike sequential RNNs.
+    2. BERT & Encoder-Only Models:
+        - Uses only encoder part of the transformer.
+        - Trained with **masked language modeling**.
+    3. GPT Series(Decoder only):
+        - Focuses solely on the **decoder**.
+        - Scales from 110 M (GPT‑1) → 175 B (GPT‑3) → >1 T (GPT‑4).
+    4. Other Notable Models:
+        - **ELMo** – contextual word embeddings.
+        - **RoBERTa** – optimised BERT training.
+        - **XLM / XLM‑R** – cross‑lingual pre‑training.
+        - **Megatron‑LM**, **Gopher**, **OPT** – large open‑source models.
+- Zero-shot Learning:
+    - No examples given → model still performs task
+- Few-shot Learning:
+    - Few examples → improves performance
+- In-context Learning:
+    - Learns from examples **during inference (no training update)**
+- Scaling Law:
+    - Increasing Model size and Data size leads to better performance and new abilities.
+- **Recent Model Highlights:**
+    1. **Gemini (Google)**
+        - Unified framework consolidating Google’s previous bot models.
+        - **Closed‑source**; comparable to OpenAI’s GPT‑4‑style APIs.
+    2. **LLaMA 3.1**
+        - **>400 B** parameters, largest open‑source Meta model to date.
+        - Shows competitive performance with proprietary models on many benchmarks.
+    3. **Mistral‑2**
+        - Supports **80+ natural languages** and **80+ programming languages**.
+        - Benchmarked against LLaMA 3.1 with “reasonable” parity.
+    4. **Corstral**
+        - Hybrid architecture: transformer‑based language core + **state‑space (Mamba)** sequence modeling.
+    5. **Phi‑3 (Microsoft)**
+        - Continuation of the tiny‑model line, targeting edge deployment with strong instruction following.
+
+## NLP (Natural Language Processing):
+
+- **Natural Language Processing (NLP)** is the interdisciplinary field of computer science, artificial intelligence, and computational linguistics that focuses on the interaction between computers and human (natural) languages.
+- **6,000+** official languages worldwide. Including dialects, the number rises dramatically (e.g., **19,000** languages in India).
+- **Alan Turing** – considered the father of NLP.
+    
+    **Noam Chomsky** – father of modern linguistics; proposed **Universal Grammar.**
+    
+- Ambiguities in Language:
+    - **Lexical & semantic ambiguity** – a single word has multiple meanings (e.g., “Trump” can be a surname or a verb meaning “to outrank”).
+    - **Syntactic ambiguity** – the sentence structure lets two parses compete (e.g., “I saw a girl **with a telescope**” – who owns the telescope?).
+    - **Pragmatic ambiguity** – the intended meaning depends on context or speaker intent (e.g., “Mujhe aapko mithai khilani padegi” can mean either *I’ll give you sweets* or *you must give me sweets*).
+    - **Punctuation ambiguity** – a missing or misplaced comma changes meaning dramatically (“Let’s eat grandma” vs. “Let’s eat, grandma”).
+    - **Idiomatic / multi‑word expressions** – the literal words differ from the idiomatic sense (“hot dog” is a food, not a canine that’s warm).
+- **NLP Task Categories:**
+    1. Natural Language Understanding (NLU)
+        - Understanding text
+        - Examples:
+            - Sentiment analysis
+            - POS tagging
+            - Parsing
+    2. Natural Language Generation (NLG)
+        - Generating text
+        - Examples:
+            - Chatbots
+            - Text generation
+- **NLP Processing Pipeline:**
+    1. **Morphology:**
+        - Study of word formation and internal structure (morphemes).
+        - **Stemming** – fast algorithm returning a root (may not be a real word).
+        - **Lemmatization** – slower but accurate, returns the dictionary form (lemma).
+        - English and Chinese are **poor morphologically**; Hindi, Hungarian are **rich** m**orphologically.**
+        - Eg - “independently” → in + depend + ent + ly.
+    2. **Syntax**:
+        - Combining words into grammatical structures.
+        - **Part‑of‑Speech (POS) Tagging:**
+            - Assigns grammatical categories (noun, verb, etc.) to each token.
+            - Example: “park” as noun vs. verb in “He went to the park” vs. “They park the car.”
+        - **Chunking:**
+            - Grouping adjacent POS‑tagged tokens into higher‑level phrases such as noun phrases (NP) or verb phrases (VP).
+            - Example: “He **[NP]** went **[VP]** to **[PP]** Mumbai **[NP]**.”
+        - **Parsing:**
+            - Builds tree structure of sentence that shows how phrases nest inside one another and how dependencies link words.
+    3. **Semantics**:
+        - Meaning of words & sentences.
+        - Types:
+            1. *Decomposition Semantics:* Breaks sentence into entities & attributes (e.g., human, female, adult).
+            2. *Ontological Semantics:* How the meaning of the word relates to the meanings of other words. (WordNet is a lexical resource that organizes words according to their semantic relations.)
+                
+                !Screenshot 2026-04-11 at 7.32.51 PM.png
+                
+            3. *Distributional Semantics:* Represents words by their surrounding context in large corpora (co‑occurrence matrices) (uses cosine similarity).
+    4. **Pragmatics & Discourse:**
+        - **Pragmatics** – The study of how context influences the interpretation of utterances, i.e., the negotiation of meaning between speaker and listener.
+        - Example: “Can you pass the bottle?” Not a question, it’s a request.
+        - **Discourse** - Understanding conversation flow.
+- **Tokenization:**
+    - Breaking a string of characters into a sequence of words.
+- **Tasks we want to solve in NLP:**
+    1. **Semantic Role Labelling (SRL):**
+        - Assign **semantic roles** (agent, patient, source, destination, etc.) to constituents of a sentence.
+        - Example: “John drove Mary from Delhi to Pune in his car.”
+            - **Agent**: John
+            - **Patient**: Mary
+            - **Source**: Delhi
+            - **Destination**: Pune
+    2. **Textual Entailment:**
+        - Determine whether one natural language sentence entails (implies) another under an ordinary interpretation.
+        - Example:
+            - (Ram hit Shyam with a hockey stick yesterday. → Shyam got hurt) ⇒ Positive TE
+            - (Ram hit Shyam with a hockey stick yesterday. → Shyam did not get hurt) ⇒ Negative TE
+            - (Ram hit Shyam with a hockey stick yesterday. → Shyam got his first goal) ⇒ Non TE
+    3. **Co-reference Resolution:**
+        - Identify when different expressions refer to the **same entity** within a discourse.
+        - Example: John shows Bob his Toyota yesterday. … that was really nice but **he** likes this one even better.” → Does **he** refer to **John** or **Bob**?
+    4. **Information Extraction:**
+        - Extraction of relevant piece of information.
+        - Named Entity Recognition (NER):
+        • Identify names (Proper nouns)
+        • [India]Location born [Sundar Pichai]Person is the CEO of [Google]Organization and its parent company [Alphabet]Organization
+        - Relation Extraction:
+        • Relation among entities
+        • CEO(Sundar Pichai, Google)
+    5. **Word Sense Disambiguation (WSD):**
+        - Choose the correct **sense** of a polysemous word using context.
+        - Example: “bank” → *financial institution* vs. *riverbank.*
+    6. **Sentiment Analysis:**
+        - Classify text as **positive**, **negative**, or **neutral**.
+        - Example: It's a mass Chinese product. Too expensive. Thin and useless ⇒ Negative
+    7. **Emotion Detection:**
+        - Assign one of six emotions (e.g., happy, sad, angry, fear, surprise, disgust).
+    8. **Machine Translation:**
+        - Given a sentence in the source language L1, convert it to the target language L2, such that the semantic (adequacy and fluency) is preserved.
+        - Modern MT still suffers from **gender bias** (e.g., “She is a doctor” → “He is a doctor” after round‑trip translation).
+    9. **Summarization:**
+        - Given a document, summarize the semantics (extract relevant information) in shorter length text.
+    10. **Question Answering (QA) Types:**
+        - Answer natural language questions based on information presented in the repository.
+        - Fact-based (Who is the author of the book Wings of Fire?)
+        - List-based (What are the islands in India?)
+        - Descriptive (hardest) (What is Greenhouse effect?)
+    11. **Dialogue Systems:**
+        - Chatbots (like ChatGPT).
