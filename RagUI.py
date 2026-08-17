@@ -1,5 +1,7 @@
-'''bridge between the ingestion.py and main.py files. It is responsible for the UI and user interaction.
+'''Bridge between ingestion.py and main.py.
+Responsible for UI and user interaction.
 '''
+
 import os
 import tempfile
 
@@ -7,6 +9,8 @@ import streamlit as st
 
 from ingestion import create_vectorstore
 from main import ask_question
+from langchain_community.document_loaders import PyPDFLoader
+from web_loader.crawler import crawl_website
 
 
 # --------------------------------------------------
@@ -14,7 +18,7 @@ from main import ask_question
 # --------------------------------------------------
 
 st.set_page_config(
-    page_title="PDF RAG Chatbot",
+    page_title="RAG Chatbot",
     page_icon="📚",
     layout="wide"
 )
@@ -24,10 +28,10 @@ st.set_page_config(
 # Title
 # --------------------------------------------------
 
-st.title("📚 PDF RAG Chatbot")
+st.title("📚 RAG Chatbot")
 
 st.write(
-    "Upload a PDF and ask questions about its contents."
+    "Upload a PDF or enter a website URL and ask questions about its contents."
 )
 
 
@@ -41,8 +45,8 @@ if "vectorstore" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if "pdf_name" not in st.session_state:
-    st.session_state.pdf_name = None
+if "source_name" not in st.session_state:
+    st.session_state.source_name = None
 
 
 # --------------------------------------------------
@@ -51,100 +55,226 @@ if "pdf_name" not in st.session_state:
 
 with st.sidebar:
 
-    st.header("📄 Upload your PDF")
+    st.header("📚 Choose Source")
 
-    uploaded_file = st.file_uploader(
-        "Choose a PDF",
-        type=["pdf"]
+    source_type = st.radio(
+        "What do you want to chat with?",
+        ["PDF", "Website"]
     )
 
-    process_button = st.button(
-        "Process PDF",
-        use_container_width=True
-    )
+
+    # ----------------------------------------------
+    # PDF option
+    # ----------------------------------------------
+
+    if source_type == "PDF":
+
+        uploaded_file = st.file_uploader(
+            "Choose a PDF",
+            type=["pdf"]
+        )
+
+        process_button = st.button(
+            "Process PDF",
+            use_container_width=True
+        )
+
+
+    # ----------------------------------------------
+    # Website option
+    # ----------------------------------------------
+
+    else:
+
+        website_url = st.text_input(
+            "Enter website URL",
+            placeholder="https://example.com"
+        )
+
+        process_button = st.button(
+            "Process Website",
+            use_container_width=True
+        )
 
 
 # --------------------------------------------------
-# Process PDF
+# Process selected source
 # --------------------------------------------------
 
 if process_button:
 
-    if uploaded_file is None:
+    # ==================================================
+    # PDF
+    # ==================================================
 
-        st.warning("Please upload a PDF first.")
+    if source_type == "PDF":
 
-    else:
+        if uploaded_file is None:
 
-        with st.spinner(
-            "Processing PDF... Please wait."
-        ):
+            st.warning(
+                "Please upload a PDF first."
+            )
 
-            try:
+        else:
 
-                # Temporary directory
-                temp_dir = tempfile.mkdtemp()
+            with st.spinner(
+                "Processing PDF... Please wait."
+            ):
 
-                pdf_path = os.path.join(
-                    temp_dir,
-                    uploaded_file.name
-                )
+                try:
 
-                # Save uploaded PDF
-                with open(pdf_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
+                    # Temporary directory
+                    temp_dir = tempfile.mkdtemp()
 
-
-                # Chroma database location
-                chroma_dir = os.path.join(
-                    temp_dir,
-                    "chroma_db"
-                )
-
-
-                # Create vector store
-                vectorstore, page_count, chunk_count = (
-                    create_vectorstore(
-                        pdf_path,
-                        chroma_dir
+                    pdf_path = os.path.join(
+                        temp_dir,
+                        uploaded_file.name
                     )
-                )
+
+                    # Save uploaded PDF
+                    with open(pdf_path, "wb") as f:
+
+                        f.write(
+                            uploaded_file.getbuffer()
+                        )
 
 
-                # Store vector database
-                st.session_state.vectorstore = vectorstore
-
-                # Store PDF name
-                st.session_state.pdf_name = uploaded_file.name
-
-                # Clear old chat
-                st.session_state.messages = []
+                    # Chroma database location
+                    chroma_dir = os.path.join(
+                        temp_dir,
+                        "chroma_db"
+                    )
 
 
-                st.success("PDF processed successfully!")
+                    # Load PDF
+                    loader = PyPDFLoader(
+                        pdf_path
+                    )
 
-                st.info(
-                    f"📄 Pages: {page_count} | "
-                    f"🧩 Chunks: {chunk_count}"
-                )
+                    pdf_docs = loader.load()
 
 
-            except Exception as e:
+                    # Create vector store
+                    vectorstore, page_count, chunk_count = (
+                        create_vectorstore(
+                            pdf_docs,
+                            chroma_dir
+                        )
+                    )
 
-                st.error(
-                    f"Error processing PDF: {e}"
-                )
+
+                    # Store vector database
+                    st.session_state.vectorstore = vectorstore
+
+                    # Store source name
+                    st.session_state.source_name = (
+                        uploaded_file.name
+                    )
+
+                    # Clear old chat
+                    st.session_state.messages = []
+
+
+                    st.success(
+                        "PDF processed successfully!"
+                    )
+
+                    st.info(
+                        f"📄 Pages: {page_count} | "
+                        f"🧩 Chunks: {chunk_count}"
+                    )
+
+
+                except Exception as e:
+
+                    st.error(
+                        f"Error processing PDF: {e}"
+                    )
+
+
+    # ==================================================
+    # WEBSITE
+    # ==================================================
+
+    elif source_type == "Website":
+
+        if not website_url:
+
+            st.warning(
+                "Please enter a website URL first."
+            )
+
+        else:
+
+            with st.spinner(
+                "Crawling website and creating embeddings..."
+            ):
+
+                try:
+
+                    # Crawl website
+                    website_docs = crawl_website(
+                        website_url,
+                        max_pages=20
+                    )
+
+
+                    # Temporary Chroma directory
+                    temp_dir = tempfile.mkdtemp()
+
+                    chroma_dir = os.path.join(
+                        temp_dir,
+                        "chroma_db"
+                    )
+
+
+                    # Create vector store
+                    vectorstore, doc_count, chunk_count = (
+                        create_vectorstore(
+                            website_docs,
+                            chroma_dir
+                        )
+                    )
+
+
+                    # Store vector database
+                    st.session_state.vectorstore = vectorstore
+
+                    # Store website name
+                    st.session_state.source_name = (
+                        website_url
+                    )
+
+                    # Clear old chat
+                    st.session_state.messages = []
+
+
+                    st.success(
+                        "Website processed successfully!"
+                    )
+
+                    st.info(
+                        f"🌐 Pages: {doc_count} | "
+                        f"🧩 Chunks: {chunk_count}"
+                    )
+
+
+                except Exception as e:
+
+                    st.error(
+                        f"Error processing website: {e}"
+                    )
 
 
 # --------------------------------------------------
-# Current PDF
+# Current source
 # --------------------------------------------------
 
-if st.session_state.pdf_name:
+if st.session_state.source_name:
 
     st.success(
         f"Currently chatting with: "
-        f"**{st.session_state.pdf_name}**"
+        f"**{st.session_state.source_name}**"
     )
 
 
@@ -154,9 +284,13 @@ if st.session_state.pdf_name:
 
 for message in st.session_state.messages:
 
-    with st.chat_message(message["role"]):
+    with st.chat_message(
+        message["role"]
+    ):
 
-        st.markdown(message["content"])
+        st.markdown(
+            message["content"]
+        )
 
 
 # --------------------------------------------------
@@ -164,17 +298,17 @@ for message in st.session_state.messages:
 # --------------------------------------------------
 
 query = st.chat_input(
-    "Ask something about your PDF..."
+    "Ask something about your source..."
 )
 
 
 if query:
 
-    # Make sure PDF exists
+    # Make sure source exists
     if st.session_state.vectorstore is None:
 
         st.warning(
-            "Please upload and process a PDF first."
+            "Please process a PDF or website first."
         )
 
         st.stop()
