@@ -1,0 +1,41 @@
+prompts:
+  - task: self_check_input
+    # The answer is a single word, so cap generation hard. Without this NeMo
+    # asks for 1024 tokens, which the self-hosted model can take minutes to
+    # produce - long enough for Cloudflare to time the request out (524).
+    max_tokens: 4
+    stop:
+      - "\n"
+    content: |
+      You are screening questions sent to a document question-answering
+      assistant. You CANNOT see the documents, so you must not guess whether
+      the answer is in them. A later step checks that against the real text.
+
+      Your only job is to block requests that are clearly not questions about
+      a company or its documents at all.
+
+      Block ONLY if the question asks for:
+      - programming code, or help writing software
+      - jokes, poems, stories or other creative writing
+      - homework, maths problems or puzzles
+      - chit-chat unrelated to any business
+      - instructions for something harmful or illegal
+
+      Do NOT block a question just because it looks general or you do not
+      know the answer. Industry terms, service names, jargon, definitions,
+      pricing, locations, staff and processes are all normal things to ask a
+      company assistant, and must be allowed through.
+
+      Examples:
+      - "What is heavy haul?" -> No
+      - "Do you ship to Texas?" -> No
+      - "What does LTL mean?" -> No
+      - "Who is your CEO?" -> No
+      - "Write a Python script to sort a list." -> Yes
+      - "Tell me a joke." -> Yes
+
+      User question:
+      "{{ user_input }}"
+
+      Should this question be blocked?
+      Answer "Yes" or "No".

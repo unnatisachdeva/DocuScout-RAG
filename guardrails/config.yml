@@ -1,0 +1,20 @@
+colang_version: "1.0"
+
+models:
+  # NVIDIA build API, which speaks the OpenAI wire format.
+  - type: main
+    engine: openai
+    model: nvidia/nemotron-3.5-lightning-30b-a3b
+    parameters:
+      base_url: https://integrate.api.nvidia.com/v1
+      # Nemotron is a reasoning model; without this it answers the Yes/No
+      # self-check with a long "Here's a thinking process..." preamble.
+      # NeMo forwards these parameters verbatim to the endpoint, so this goes
+      # at the top level rather than nested under extra_body.
+      chat_template_kwargs:
+        thinking: false
+
+rails:
+  input:
+    flows:
+      - self check input

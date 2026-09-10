@@ -2,6 +2,7 @@
 langchain
 langchain-core
 langchain-community
+langchain-classic
 langchain-text-splitters
 
 # LLM Providers
@@ -13,10 +14,22 @@ langchain-google-genai
 chromadb
 langchain-chroma
 
+# Retrieval
+rank_bm25
+flashrank
+
+# Guardrails
+nemoguardrails
+
 # Document Loaders
 pypdf
 python-docx
 unstructured
+
+# Web crawling
+requests
+beautifulsoup4
+playwright
 
 # Environment Variables
 python-dotenv

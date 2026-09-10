@@ -9,3 +9,5 @@ __pycache__/
 # Chroma/vector database
 chroma_db/
 vector store/chroma_db/
+test_chroma_db/
+*.sqlite3

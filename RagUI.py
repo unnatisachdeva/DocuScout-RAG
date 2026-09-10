@@ -8,9 +8,12 @@ import tempfile
 import streamlit as st
 
 from ingestion import create_vectorstore
-from main import ask_question
+from retriever_builder import get_hybrid_retriever
+from reranker import get_reranked_retriever
+from main import ask_question,llm
 from langchain_community.document_loaders import PyPDFLoader
 from web_loader.crawler import crawl_website
+
 
 
 # --------------------------------------------------
@@ -36,11 +39,14 @@ st.write(
 
 
 # --------------------------------------------------
-# Session state
+# Session state 
 # --------------------------------------------------
 
 if "vectorstore" not in st.session_state:
     st.session_state.vectorstore = None
+
+if "retriever" not in st.session_state:
+    st.session_state.retriever= None
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -162,6 +168,10 @@ if process_button:
                         )
                     )
 
+                    #build hybrid+reranked retriever ONCE, cache it
+                    hybrid= get_hybrid_retriever(vectorstore)
+                    st.session_state.retriever= get_reranked_retriever(hybrid,top_n=5)
+                    
 
                     # Store vector database
                     st.session_state.vectorstore = vectorstore
@@ -236,6 +246,10 @@ if process_button:
                         )
                     )
 
+                    # Build hybrid + reranked retriever ONCE, cache it
+                    hybrid= get_hybrid_retriever(vectorstore)
+                    st.session_state.retriever= get_reranked_retriever(hybrid,top_n=5)
+
 
                     # Store vector database
                     st.session_state.vectorstore = vectorstore
@@ -305,7 +319,7 @@ query = st.chat_input(
 if query:
 
     # Make sure source exists
-    if st.session_state.vectorstore is None:
+    if st.session_state.vectorstore is None or st.session_state.retriever is None:
 
         st.warning(
             "Please process a PDF or website first."
@@ -332,8 +346,11 @@ if query:
         with st.spinner("Thinking..."):
 
             answer = ask_question(
-                st.session_state.vectorstore,
-                query
+                st.session_state.retriever, #reranked retriever
+                llm,
+                query,
+                chat_history=[f"{m['role']}: {m['content']}" for m in st.session_state.messages[:-1]]
+                
             )
 
             st.markdown(answer)

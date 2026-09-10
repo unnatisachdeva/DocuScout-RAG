@@ -1,0 +1,8 @@
+from main import llm
+
+print("Testing LLM...")
+
+response = llm.invoke("Say hello in one sentence.")
+
+print("LLM responded!")
+print(response.content)

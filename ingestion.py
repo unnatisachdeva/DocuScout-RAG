@@ -57,11 +57,37 @@ Pipeline:
     Chroma
 '''
 
+import os
+import re
 import time
+
+from dotenv import load_dotenv
+
+# This module currently only works because main.py happens to be imported
+# first; load the keys here too so it stands on its own.
+load_dotenv(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+)
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
+
+# Must match the model used for queries in main.py. Indexing with one model and
+# querying with another silently wrecks retrieval: the vectors have the same
+# dimension, so nothing errors, but the distances are meaningless.
+EMBEDDING_MODEL = "gemini-embedding-001"
+
+
+def _retry_delay_from_error(message, attempt):
+    """Seconds to wait before retrying, honouring the server's own hint."""
+    match = re.search(r"retryDelay[\"']?\s*:\s*[\"']?(\d+(?:\.\d+)?)", message)
+
+    if match:
+        return float(match.group(1)) + 2
+
+    # Otherwise back off exponentially: 15s, 30s, 60s, 120s...
+    return min(15 * (2 ** attempt), 120)
 
 
 def create_vectorstore(
@@ -97,7 +123,7 @@ def create_vectorstore(
     # --------------------------------
 
     embedding_model = GoogleGenerativeAIEmbeddings(
-        model="gemini-embedding-2"
+        model=EMBEDDING_MODEL
     )
 
 
@@ -144,10 +170,12 @@ def create_vectorstore(
         )
 
 
-        retries = 3
+        max_attempts = 6
+
+        last_error = None
 
 
-        while retries > 0:
+        for attempt in range(max_attempts):
 
             try:
 
@@ -155,42 +183,64 @@ def create_vectorstore(
                     batch
                 )
 
+                last_error = None
+
                 break
 
 
             except Exception as e:
 
-                if (
-                    "429" in str(e)
+                message = str(e)
+
+                last_error = e
+
+
+                is_rate_limited = (
+                    "429" in message
                     or
-                    "RESOURCE_EXHAUSTED"
-                    in str(e)
-                ):
-
-                    print(
-                        "Embedding quota reached."
-                    )
-
-                    print(
-                        "Waiting 45 seconds..."
-                    )
+                    "RESOURCE_EXHAUSTED" in message
+                    or
+                    "quota" in message.lower()
+                )
 
 
-                    time.sleep(45)
+                if not is_rate_limited:
 
-                    retries -= 1
-
-                else:
-
-                    raise e
+                    raise
 
 
-        if retries == 0:
+                # The daily quota cannot be waited out, so stop immediately
+                # instead of sleeping through five pointless retries.
+                if "PerDay" in message:
 
-            raise Exception(
-                "Embedding failed after retries"
-            )
+                    raise RuntimeError(
+                        "The daily embedding quota for this Google project is "
+                        "exhausted. It resets at midnight Pacific time, or you "
+                        "can enable billing to remove the limit. "
+                        f"Indexed {start} of {len(chunks)} chunks before stopping."
+                    ) from e
 
+
+                wait = _retry_delay_from_error(message, attempt)
+
+                print(
+                    f"Embedding rate limit hit. Waiting {wait:.0f}s "
+                    f"(attempt {attempt + 1}/{max_attempts})..."
+                )
+
+                time.sleep(wait)
+
+
+        if last_error is not None:
+
+            raise RuntimeError(
+                f"Embedding failed after {max_attempts} attempts on batch "
+                f"{batch_number}/{total_batches}. Last error: {last_error}"
+            ) from last_error
+
+
+        # Stay under the per-minute request limit on large sites.
+        time.sleep(1)
 
     print(
         "Vectorstore creation completed."
